@@ -1,0 +1,81 @@
+#!/usr/bin/python3
+#+
+# Returns the size of C types with the specified names. Invoke
+# this script as follows:
+#
+#     sizeof [«include» ...] «typename» ...
+#
+# where the arguments are one or more type names to determine
+# the sizes of. The «include»s take the form of “-i«includefile»”
+# or “--include=«includefile»” specifying include files that
+# are needed to find the definitions of those types. The
+# script compiles and runs a generated C program that prints
+# out the sizes of the types.
+#-
+
+import sys
+import os
+import subprocess
+import tempfile
+import shutil
+import getopt
+
+includes = []
+opts, args = getopt.getopt \
+  (
+    sys.argv[1:],
+    "i:",
+    ["include="]
+  )
+if len(args) == 0 :
+    raise getopt.GetoptError("nothing to do")
+#end if
+for keyword, value in opts :
+    if keyword == "-i" or keyword == "--include" :
+        includes.append(value)
+    #end if
+#end for
+
+temp_dir = tempfile.mkdtemp(prefix = "sizeof-")
+prev_dir = os.getcwd()
+os.chdir(temp_dir)
+srcfilename = "test.c"
+exefilename = "test"
+srcfile = open(srcfilename, "wt")
+for include in includes :
+    srcfile.write("#include <%s>\n" % include)
+#end for
+srcfile.write \
+  (
+    "#include <stdio.h>\n"
+    "\n"
+    "int main(int argc, char **argv)\n"
+    "  {\n"
+  )
+for typename in args :
+    srcfile.write \
+      (
+            "    fprintf(stdout, \"sizeof(%(type)s) = %%d\\n\", sizeof(%(type)s));\n"
+        %
+            {"type" : typename}
+      )
+#end for
+srcfile.write \
+  (
+    "    return 0;\n"
+    "  } /*main*/\n"
+  )
+srcfile.close()
+subprocess.check_call \
+  (
+    args = ("gcc", "-o", exefilename, srcfilename)
+  )
+result = subprocess.check_output \
+  (
+    args = ("./" + exefilename,),
+    universal_newlines = True
+  )
+sys.stdout.write(result)
+sys.stdout.flush()
+os.chdir(prev_dir)
+shutil.rmtree(temp_dir)
