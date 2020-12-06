@@ -3,9 +3,9 @@
 # Returns the size of C types with the specified names. Invoke
 # this script as follows:
 #
-#     sizeof [«include» ...] «typename» ...
+#     sizeof [«include» ...] «type» ...
 #
-# where the arguments are one or more type names to determine
+# where the arguments are one or more type specs to determine
 # the sizes of. The «include»s take the form of “-i«includefile»”
 # or “--include=«includefile»” specifying include files that
 # are needed to find the definitions of those types. The
@@ -52,12 +52,12 @@ srcfile.write \
     "int main(int argc, char **argv)\n"
     "  {\n"
   )
-for typename in args :
+for typespec in args :
     srcfile.write \
       (
             "    fprintf(stdout, \"sizeof(%(type)s) = %%d\\n\", sizeof(%(type)s));\n"
         %
-            {"type" : typename}
+            {"type" : typespec}
       )
 #end for
 srcfile.write \
@@ -66,16 +66,21 @@ srcfile.write \
     "  } /*main*/\n"
   )
 srcfile.close()
-subprocess.check_call \
+done = subprocess.run \
   (
     args = ("gcc", "-o", exefilename, srcfilename)
   )
-result = subprocess.check_output \
-  (
-    args = ("./" + exefilename,),
-    universal_newlines = True
-  )
-sys.stdout.write(result)
-sys.stdout.flush()
+if done.returncode == 0 :
+    done = subprocess.run \
+      (
+        args = ("./" + exefilename,),
+        capture_output = True,
+        text = True
+      )
+    if done.returncode == 0 :
+        sys.stdout.write(done.stdout)
+        sys.stdout.flush()
+    #end if
+#end if
 os.chdir(prev_dir)
 shutil.rmtree(temp_dir)
