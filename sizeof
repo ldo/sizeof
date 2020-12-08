@@ -11,6 +11,22 @@
 # are needed to find the definitions of those types. The
 # script compiles and runs a generated C program that prints
 # out the sizes of the types.
+#
+# Example: the command
+#
+#     sizeof --include=sys/types.h pid_t uid_t gid_t
+#
+# reports the sizes of the pid_t, uid_t and gid_t types.
+# These need to be defined by including <sys/types.h>, so
+# that is specified in an --include directive. On a 64-bit
+# system, you should see this output:
+#
+#     sizeof(pid_t) = 4
+#     sizeof(uid_t) = 4
+#     sizeof(gid_t) = 4
+#
+# Copyright 2020 by Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+# Licensed under CC-BY <http://creativecommons.org/licenses/by/4.0/>.
 #-
 
 import sys
